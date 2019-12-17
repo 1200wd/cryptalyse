@@ -20,6 +20,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
 from bitcoinlib.wallets import HDWallet, wallet_exists
 from bitcoinlib.encoding import to_hexstring
 
@@ -129,14 +130,19 @@ class CryptalyseWallet(HDWallet):
     #     txs = HDWallet.transactions(self, account_id, network, include_new, key_id, as_dict)
     #     return txs
 
-    def transactions_export_csv(self, tagged_addresses=None):
+    def transactions_export_csv(self, tagged_addresses=None, date_from=None, date_to=None, file=sys.stdout):
+        if not tagged_addresses:
+            tagged_addresses = []
         denominator = self.network.denominator
         wlt_addresses = self.addresslist()
 
         print("transaction_date, transaction_hash, in/out, addresses_in, addresses_out, "
               "addresses_in_tagged, addresses_out_tagged, value_in, value_out, "
-              "value_human_in, value_human_out, value_cumulative, value_cumulative_human")
+              "value_human_in, value_human_out, value_cumulative, value_cumulative_human", file=file)
         for tei in self.transactions_export():
+            if tei[0] < date_from or tei[0] > date_to:
+                pass
+
             value_in = 0 if tei[5] < 0 else tei[5]
             value_out = 0 if tei[5] > 0 else -tei[5]
 
@@ -165,4 +171,4 @@ class CryptalyseWallet(HDWallet):
                    ";".join(list(set(tei[3]))), ";".join(list(set(tei[4]))),
                    ";".join(addresses_in_tagged), ";".join(addresses_out_tagged),
                    value_in, value_out, value_in*denominator, value_out*denominator,
-                   tei[6], tei[6]*denominator))
+                   tei[6], tei[6]*denominator), file=file)
