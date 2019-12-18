@@ -29,6 +29,7 @@ class CryptalyseWallet(HDWallet):
 
     def __init__(self, *args, **kwargs):
         self._inputs_correlated = []
+        self._totals_year_open = {}
         HDWallet.__init__(self, *args, **kwargs)
 
     def input_totals(self, tagged_addresses=None):
@@ -130,21 +131,33 @@ class CryptalyseWallet(HDWallet):
     #     txs = HDWallet.transactions(self, account_id, network, include_new, key_id, as_dict)
     #     return txs
 
+    def balance_year_open(self):
+        if not self._totals_year_open:
+            self.transactions_export_csv(file='/dev/null')
+        return self._totals_year_open
+
     def transactions_export_csv(self, tagged_addresses=None, date_from=None, date_to=None, file=sys.stdout):
         if not tagged_addresses:
             tagged_addresses = []
         denominator = self.network.denominator
         wlt_addresses = self.addresslist()
+        year_old = 0
 
-        print("transaction_date, transaction_hash, in/out, addresses_in, addresses_out, "
-              "addresses_in_tagged, addresses_out_tagged, value_in, value_out, "
-              "value_human_in, value_human_out, value_cumulative, value_cumulative_human", file=file)
+        print("transaction_date, transaction_hash, in/out, value_in, value_out, "
+              "value_in_hr, value_out_hr, value_cumulative, value_cumulative_hr, "
+              "in_name, out_name, in_addresses, out_addresses, ", file=file)
         for tei in self.transactions_export():
             if tei[0] < date_from or tei[0] > date_to:
-                pass
+                continue
 
             value_in = 0 if tei[5] < 0 else tei[5]
             value_out = 0 if tei[5] > 0 else -tei[5]
+
+            year = tei[0].year
+            if year_old != year:
+                year_balance = tei[6] - value_in + value_out
+                self._totals_year_open.update({str(year): year_balance})
+                year_old = year
 
             addresses_in_tagged = []
             for addr in tei[3]:
@@ -166,9 +179,63 @@ class CryptalyseWallet(HDWallet):
                     addresses_out_tagged.append(addr)
             addresses_out_tagged = list(set(addresses_out_tagged))
 
-            print("%s,%s,%s,%s,%s,%s,%s,%d,%d,%.8f,%.8f,%d,%.8f" %
+            print("%s,%s,%s,%d,%d,%.8f,%.8f,%d,%.8f,%s,%s,%s,%s" %
                   (tei[0].strftime("%Y-%m-%d %H:%M:%S"), tei[1], tei[2],
-                   ";".join(list(set(tei[3]))), ";".join(list(set(tei[4]))),
-                   ";".join(addresses_in_tagged), ";".join(addresses_out_tagged),
                    value_in, value_out, value_in*denominator, value_out*denominator,
-                   tei[6], tei[6]*denominator), file=file)
+                   tei[6], tei[6]*denominator,
+                   ";".join(addresses_in_tagged), ";".join(addresses_out_tagged),
+                   ";".join(list(set(tei[3]))), ";".join(list(set(tei[4])))),
+                  file=file)
+
+    def export_balance_totals(self):
+        raise Exception("Errors in HDWallet class for self.transactions(as_dict=True), see todo's")
+        value_out = 0
+        value_in = 0
+        total_out = 0
+        total_in = 0
+        year = 0
+        year_old = 0
+        balance_end = 0
+        year_first = None
+        count = 0
+
+        txs = self.transactions(as_dict=True)
+        for tx in txs:
+            count += 1
+            year = tx['date'].year
+            if year_old == 0:
+                year_first = year
+            last_tx = False
+            if len(txs) == count:
+                last_tx = True
+            if year_old != year or last_tx:
+                if last_tx:
+                    if tx['is_output']:
+                        value_out += -tx['value']
+                    else:
+                        value_in += tx['value']
+                balance = balance_end + value_in - value_out
+                if year_old:
+                    print("Year %d" % year_old)
+                    print("Total in: %s, Total out: %s, Balance %s" % (self.network.print_value(value_in),
+                                                                       self.network.print_value(value_out),
+                                                                       self.network.print_value(balance)))
+                total_in += value_in
+                total_out += value_out
+                value_in = 0
+                value_out = 0
+                year_old = year
+                balance_end = balance
+            if tx['is_output']:
+                value_out += -tx['value']
+                if tx['value'] == 0:
+                    print("null")
+                print('out ', -tx['value'] / 100000000)
+            else:
+                value_in += tx['value']
+                print('in ', tx['value'] / 100000000)
+
+        print("Wallet active from %d to %d" % (year_first, year))
+        print("Grand Total in: %s, Grand Total out: %s, End Balance %s" %
+              (self.network.print_value(total_in), self.network.print_value(total_out),
+               self.network.print_value(total_in - total_out)))
