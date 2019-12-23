@@ -21,6 +21,7 @@
 #
 
 import sys
+import os
 from bitcoinlib.wallets import HDWallet, wallet_exists
 from bitcoinlib.encoding import to_hexstring
 
@@ -66,7 +67,10 @@ class CryptalyseWallet(HDWallet):
                     totals[i_addr] = (new_value, new_total_wallet_input, totals[i_addr][2], totals[i_addr][3])
                 else:
                     counted_wlt_input = True
-                    totals[i_addr] = (i.value, total_wallet_input, set([i.address]), [prev_tx])
+                    totals[i_addr] = (i.value, total_wallet_input, {i.address}, [prev_tx])
+                if own_wallet_tx:
+                    print(totals[i_addr])
+                    t.info()
             if own_wallet_tx:
                 cont_inps = [i.address for i in t.inputs if i.address not in wlt_addresses]
                 if cont_inps:
@@ -133,7 +137,7 @@ class CryptalyseWallet(HDWallet):
 
     def balance_year_open(self):
         if not self._totals_year_open:
-            self.transactions_export_csv(file='/dev/null')
+            self.transactions_export_csv(file=os.devnull)
         return self._totals_year_open
 
     def transactions_export_csv(self, tagged_addresses=None, date_from=None, date_to=None, file=sys.stdout):
@@ -145,9 +149,9 @@ class CryptalyseWallet(HDWallet):
 
         print("transaction_date, transaction_hash, in/out, value_in, value_out, "
               "value_in_hr, value_out_hr, value_cumulative, value_cumulative_hr, "
-              "in_name, out_name, in_addresses, out_addresses, ", file=file)
+              "in_name, out_name, in_addresses, out_addresses", file=file)
         for tei in self.transactions_export():
-            if tei[0] < date_from or tei[0] > date_to:
+            if (date_from and tei[0] < date_from) or (date_to and tei[0] > date_to):
                 continue
 
             value_in = 0 if tei[5] < 0 else tei[5]

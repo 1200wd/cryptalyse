@@ -24,16 +24,20 @@ else:
     # w.import_key(Address.import_address('tb1qq0k9jh4npm5y7dgy5uj759ysgq6uzv7sp857np'))
 # w.transactions_update()
 # w.scan(scan_gap_limit=1)
-# w.info()
+w.info()
 
 tagged_addresses = {
     '2NGZrVvZG92qGYqzTLjCAewvPZ7JE8S8VxE': 'Olaf',
     'mv4rnyY3Su5gjcDNzbMLKBQkBicCtHUtFB': 'Otto',
     'tb1q2m8pzuq8q4mqgdu43pv89wldx35kqkae42l7pr': 'Ingrid',
+    'tb1q8zh0xnnjswzg8vw4wt3j0x8crf0fr3g94gw2k5': 'Iris',
+    'tb1qcszk36t09h8m6sj2k7deklt9qkx46vt97mvlcv': 'Ingrid',
 }
-w.transactions_export_csv(tagged_addresses)
 
-# pprint(w.input_totals())
+# Export all wallet's transactions as Comma seperated file
+w.transactions_export_csv(tagged_addresses, file=open('%s.csv' % wallet_name, 'w'))
+
+pprint(w.input_totals(tagged_addresses))
 # pprint(w.output_totals())
 # print(w.clusters())
 # print(w.inputs_correlated)
