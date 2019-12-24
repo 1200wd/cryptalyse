@@ -68,9 +68,6 @@ class CryptalyseWallet(HDWallet):
                 else:
                     counted_wlt_input = True
                     totals[i_addr] = (i.value, total_wallet_input, {i.address}, [prev_tx])
-                if own_wallet_tx:
-                    print(totals[i_addr])
-                    t.info()
             if own_wallet_tx:
                 cont_inps = [i.address for i in t.inputs if i.address not in wlt_addresses]
                 if cont_inps:
