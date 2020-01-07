@@ -134,7 +134,7 @@ class CryptalyseWallet(HDWallet):
 
     def balance_year_open(self):
         if not self._totals_year_open:
-            self.transactions_export_csv(file=os.devnull)
+            self.transactions_export_csv(file=open(os.devnull, 'w'))
         return self._totals_year_open
 
     def transactions_export_csv(self, tagged_addresses=None, date_from=None, date_to=None, file=sys.stdout):
