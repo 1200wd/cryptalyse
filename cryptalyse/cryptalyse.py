@@ -191,6 +191,7 @@ class CryptalyseWallet(Wallet):
         prev_value_cumulative = 0
         for tei in self.transactions_export(skip_change=False):
             if (date_from and tei[0] < date_from) or (date_to and tei[0] > date_to):
+                prev_value_cumulative = tei[6]
                 continue
 
             value_in = 0 if tei[5] < 0 else tei[5]
