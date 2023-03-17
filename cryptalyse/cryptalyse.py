@@ -473,7 +473,7 @@ class CryptalyseWallet(Wallet):
             else:
                 yearstr = str(1 + int(year))
                 datestr = '%s-01-01' % yearstr
-            if year == datetime.today().year and yearly_totals_end_of_year:
+            if year == datetime.today().year:
                 datestr = datetime.today().strftime("%Y-%m-%d")
             price_eur = 0 if not year_totals[year][3] else \
                 self.price_history(datestr) * year_totals[year][3] * self.network.denominator
