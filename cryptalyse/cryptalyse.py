@@ -453,7 +453,7 @@ class CryptalyseWallet(Wallet):
                 utxo_year_address.append(addr_balances)
 
             df = pd.DataFrame(utxo_year_address, index=all_years).fillna(0)
-            df.swapaxes("index", "columns").to_excel(writer, sheet_name='Address Totals')
+            df.transpose().to_excel(writer, sheet_name='Address Totals')
             worksheet_addresses_year = writer.sheets['Address Totals']
             worksheet_addresses_year.set_column(0, 0, 50)
             worksheet_addresses_year.set_column(1, 15, 15, format_btc)
