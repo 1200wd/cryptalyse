@@ -342,7 +342,7 @@ class CryptalyseWallet(Wallet):
             ('Signatures required', str(self.multisig_n_required)),
             ('Witness Type', self.witness_type),
             ('Script Type', self.script_type),
-            ('Latest Update', self.last_updated.replace(tzinfo=None)),
+            ('Latest Update', '' if not self.last_updated else self.last_updated.replace(tzinfo=None)),
             ('Current Balance', self.balance(as_string=True)),
             ('', ''),
             ('Date generated', str(datetime.today())),
