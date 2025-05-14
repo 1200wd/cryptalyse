@@ -48,6 +48,7 @@ class CryptalyseWallet(Wallet):
         self.total_in = None
         self.total_out = None
         Wallet.__init__(self, *args, **kwargs)
+        Wallet.strict = False   # Ignore invalid/unrecognised transactions
 
     def _fetch_price_history(self):
         fp = open(file_price_history)
