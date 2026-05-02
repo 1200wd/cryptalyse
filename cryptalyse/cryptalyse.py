@@ -23,7 +23,7 @@
 import sys
 import os
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 from bitcoinlib.wallets import Wallet
 from bitcoinlib.main import *
@@ -474,7 +474,7 @@ class CryptalyseWallet(Wallet):
                 yearstr = str(1 + int(year))
                 datestr = '%s-01-01' % yearstr
             if year == datetime.today().year:
-                datestr = datetime.today().strftime("%Y-%m-%d")
+                datestr =(datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
             price_eur = 0 if not year_totals[year][3] else \
                 self.price_history(datestr) * year_totals[year][3] * self.network.denominator
             yt_list.append((yearstr, datestr, year_totals[year][0] * self.network.denominator, year_totals[year][1] *
