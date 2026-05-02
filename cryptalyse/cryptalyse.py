@@ -29,8 +29,8 @@ from bitcoinlib.wallets import Wallet
 from bitcoinlib.main import *
 
 
-# Old price history (2013-2020), extracted from https://www.CryptoDataDownload.com
-file_price_history = 'cryptalyse/cryptalyse/price_history_kraken.csv'
+# Old price history (2010-2020), extracted from https://www.CryptoDataDownload.com
+file_price_history = 'cryptalyse/cryptalyse/pricehistory_BTCEUR_day_2010_2020.csv'
 
 # Price history (2020+), fetched from Kraken API. Update with kraken_fetch_price_history.py
 file_price_history2 = 'cryptalyse/cryptalyse/Kraken_BTCEUR_day.csv'
