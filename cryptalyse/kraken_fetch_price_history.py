@@ -1,5 +1,6 @@
 # Source https://www.cryptodatadownload.com/blog/kraken_how_to_script.py
 # First import the libraries that we need to use
+import os
 import pandas as pd
 import requests
 import json
@@ -20,9 +21,11 @@ def fetch_OHLC_data(symbol, timeframe):
         tf = ''
     filename = f'Kraken_{symbol}_{tf}.csv'
 
-    with open(filename, 'r') as f:
-        last_line = f.readlines()[-1]
-        since = last_line.split(',')[0]
+    since = 1581465600
+    if os.path.isfile(filename):
+        with open(filename, 'r') as f:
+            last_line = f.readlines()[-1]
+            since = last_line.split(',')[0]
 
     url = f'https://api.kraken.com/0/public/OHLC?pair={symbol}&interval={timeframe}&since={since}'
     print("Open url: %s" % url)
@@ -54,7 +57,7 @@ def fetch_OHLC_data(symbol, timeframe):
             data.to_csv(filename, index=False, mode='a', header=False)
             print("Fetched %d records from Kraken" % len(data))
     else:
-        print("Did not receieve OK response from Kraken API")
+        print("Did not receive OK response from Kraken API")
 
 
 def fetch_SPREAD_data(symbol):
@@ -129,3 +132,6 @@ if __name__ == "__main__":
     fetch_OHLC_data(symbol=pair, timeframe='1440')  # fetches daily data
     # fetch_SPREAD_data(symbol=pair) # gets bid/ask spread data
     # fetch_PRINTS_data(symbol=pair) # gets historical trade print data
+
+    pair = "BTC/USD"
+    fetch_OHLC_data(symbol=pair, timeframe='1440')
