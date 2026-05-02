@@ -1,9 +1,17 @@
+# -*- coding: utf-8 -*-
+#
+#    Cryptalyse - Analyse cryptocurrency wallets
+#    Export all wallets transactions and summarize inputs and outputs
+#    © 2020-2026 May - 1200 Web Development <http://1200wd.com/>
+
+
 import os
 from pprint import pprint
 from bitcoinlib.keys import Address
 from bitcoinlib.wallets import wallet_exists, wallet_delete_if_exists
 from bitcoinlib.config.config import BCL_DATABASE_DIR
-from cryptalyse import CryptalyseWallet
+from cryptalyse.cryptalyse import CryptalyseWallet
+
 
 test_database = os.path.join(BCL_DATABASE_DIR, 'bitcoinlib.tmp.sqlite')
 # if os.path.isfile(test_database):

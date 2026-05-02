@@ -2,7 +2,8 @@
 #
 #    Cryptalyse - Analyse cryptocurrency wallets
 #    Reconstruct partially known wallet example
-#    © 2020 January - 1200 Web Development <http://1200wd.com/>
+#    © 2020 - 2026 May - 1200 Web Development <http://1200wd.com/>
+
 
 from bitcoinlib.wallets import wallet_delete_if_exists
 from bitcoinlib.keys import Address

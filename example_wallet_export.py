@@ -2,7 +2,7 @@
 #
 #    Cryptalyse - Analyse cryptocurrency wallets
 #    Export all wallets transactions and summarize inputs and outputs
-#    © 2020 January - 1200 Web Development <http://1200wd.com/>
+#    © 2026 January - 1200 Web Development <http://1200wd.com/>
 
 from pprint import pprint
 from bitcoinlib.wallets import wallet_delete_if_exists
@@ -10,6 +10,7 @@ from cryptalyse.cryptalyse import CryptalyseWallet
 
 from bitcoinlib.main import BCL_DATABASE_DIR
 test_database = BCL_DATABASE_DIR + '/cryptalyse.sqlite'
+
 
 wallet_name = 'example_wallet_export'
 wif = \
