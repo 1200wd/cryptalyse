@@ -443,7 +443,6 @@ class CryptalyseWallet(Wallet):
             for year in all_years:
                 utxos = utxo_year.get(year, {})
                 addr_balances = {}
-                value = 0
                 for utxo in utxos.values():
                     value = utxo[0] * self.network.denominator
                     addr = utxo[1]
@@ -453,7 +452,7 @@ class CryptalyseWallet(Wallet):
                     addr_balances.update({addr: value})
                 utxo_year_address.append(addr_balances)
 
-            df = pd.DataFrame(utxo_year_address, index=all_years).fillna(0)
+            df = pd.DataFrame(utxo_year_address, index=[str(year) for year in all_years]).fillna(0)
             df.transpose().to_excel(writer, sheet_name='Address Totals')
             worksheet_addresses_year = writer.sheets['Address Totals']
             worksheet_addresses_year.set_column(0, 0, 50)
