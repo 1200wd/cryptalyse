@@ -29,29 +29,50 @@ from bitcoinlib.wallets import Wallet
 from bitcoinlib.main import *
 
 
-# Old price history (2010-2020), extracted from https://www.CryptoDataDownload.com
-file_price_history = 'cryptalyse/cryptalyse/pricehistory_BTCEUR_day_2010_2020.csv'
+# Old price history (2010+)
+file_price_history = 'cryptalyse/cryptalyse/pricehistory_BTC{currency}_day_2010.csv'
 
 # Price history (2020+), fetched from Kraken API. Update with kraken_fetch_price_history.py
-file_price_history2 = 'cryptalyse/cryptalyse/Kraken_BTCEUR_day.csv'
+file_price_history2 = 'cryptalyse/cryptalyse/Kraken_BTC{currency}_day.csv'
 
 
 class CryptalyseWallet(Wallet):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, fiat_currency=None, **kwargs):
+        Wallet.__init__(self, *args, **kwargs)
         self._inputs_correlated = []
+        self.fiat_currency = 'eur' if not fiat_currency else fiat_currency.lower()
         self.columns_transactions_export = \
             ["transaction_date", "txid", "in/out", "value_in_btc", "value_out_btc", "fee_btc", "value_cumulative_btc",
-            "value_eur", "value_cumulative_eur", "in_name", "out_name", "in_addresses",
-            "out_addresses"]
+             f"value_{self.fiat_currency}", f"value_cumulative_{self.fiat_currency}", "in_name", "out_name",
+             "in_addresses", "out_addresses"]
         self._price_history = {}
         self.total_in = None
         self.total_out = None
-        Wallet.__init__(self, *args, **kwargs)
         Wallet.strict = False   # Ignore invalid/unrecognised transactions
 
+    @classmethod
+    def create(cls, name, keys=None, owner='', network=None, account_id=0, purpose=0, scheme='bip32',
+               sort_keys=True, password='', witness_type=None, encoding=None, multisig=None, sigs_required=None,
+               cosigner_id=None, key_path=None, anti_fee_sniping=True, strict=True, ignore_dust=True, db_uri=None,
+               db_cache_uri=None, db_password=None, fiat_currency=None):
+        w = super(CryptalyseWallet, cls).create(name, keys=keys, owner=owner, network=network, account_id=account_id,
+                                                purpose=purpose, scheme=scheme, sort_keys=sort_keys, password=password,
+                                                witness_type=witness_type, encoding=encoding, multisig=multisig,
+                                                sigs_required=sigs_required, cosigner_id=cosigner_id, key_path=key_path,
+                                                anti_fee_sniping=anti_fee_sniping, strict=strict,
+                                                ignore_dust=ignore_dust, db_uri=db_uri, db_cache_uri=db_cache_uri,
+                                                db_password=db_password)
+        w.fiat_currency = 'eur' if not fiat_currency else fiat_currency.lower()
+        w.columns_transactions_export = \
+            ["transaction_date", "txid", "in/out", "value_in_btc", "value_out_btc", "fee_btc", "value_cumulative_btc",
+             f"value_{w.fiat_currency}", f"value_cumulative_{w.fiat_currency}", "in_name", "out_name",
+             "in_addresses", "out_addresses"]
+        return w
+
     def _fetch_price_history(self):
-        fp = open(file_price_history)
+        fn = file_price_history.format(currency=self.fiat_currency.upper())
+        fp = open(fn)
         self._price_history = {}
         for l in fp.readlines():
             pl = l.split(',')
@@ -61,7 +82,8 @@ class CryptalyseWallet(Wallet):
             except:
                 pass
             self._price_history.update({pl[0]: l_rate})
-        fp2 = open(file_price_history2)
+        fn2 = file_price_history2.format(currency=self.fiat_currency.upper())
+        fp2 = open(fn2)
         for l in fp2.readlines():
             pl = l.split(',')
             l_rate = 0
@@ -220,14 +242,14 @@ class CryptalyseWallet(Wallet):
                     addresses_out_tagged.append(addr)
             addresses_out_tagged = list(set(addresses_out_tagged))
 
-            value_eur = 0
+            value_fiat = 0
             value_date = tei[0].strftime("%Y-%m-%d")
             if value_date in self._price_history:
-                value_eur = self.price_history(value_date) * ((value_in - value_out) * denominator)
-            value_eur_cum = 0
+                value_fiat = self.price_history(value_date) * ((value_in - value_out) * denominator)
+            value_fiat_cum = 0
             value_date = tei[0].strftime("%Y-%m-%d")
             if value_date in self._price_history:
-                value_eur_cum = self.price_history(value_date) * tei[6]*denominator
+                value_fiat_cum = self.price_history(value_date) * tei[6]*denominator
 
             # Derive fee from value_in/out and cumulative values
             tx_fee = (value_in - value_out) + prev_value_cumulative - tei[6]
@@ -235,7 +257,7 @@ class CryptalyseWallet(Wallet):
 
             tx_list.append((tei[0], tei[1], tei[2],
                             (value_in * denominator), (value_out * denominator), tx_fee * denominator,
-                            (tei[6] * denominator), value_eur, value_eur_cum,
+                            (tei[6] * denominator), value_fiat, value_fiat_cum,
                             seperator2.join(addresses_in_tagged), seperator2.join(addresses_out_tagged),
                             seperator2.join(list(set(tei[3]))), seperator2.join(list(set(tei[4])))))
 
@@ -318,7 +340,7 @@ class CryptalyseWallet(Wallet):
     def export_to_excel(self, filename, tagged_addresses, date_from, date_to, yearly_totals_end_of_year=True):
         writer = pd.ExcelWriter(filename, engine='xlsxwriter')
         format_btc = writer.book.add_format({'num_format': '0.00000000'})
-        format_eur = writer.book.add_format({'num_format': '#,##0.00'})
+        format_fiat = writer.book.add_format({'num_format': '#,##0.00'})
         format_header = writer.book.add_format({'font_size': 20, 'bold': True})
         format_fieldnames = writer.book.add_format({'align': 'left'})
         all_years = range(date_from.year, date_to.year + 1)
@@ -336,6 +358,7 @@ class CryptalyseWallet(Wallet):
             ('Network', self.network.name),
             ('Currency Code', self.network.currency_code),
             ('Currency Symbol', self.network.currency_symbol),
+            ('Fiat Currency', self.fiat_currency.upper()),
             ('Scheme', self.scheme),
             ('Encoding', self.encoding),
             ('Sort Keys', 'true' if self.sort_keys else 'false'),
@@ -387,7 +410,7 @@ class CryptalyseWallet(Wallet):
 
         worksheet_txs.set_column(2, 2, 15)  # transaction_id
         worksheet_txs.set_column(4, 7, 20, format_btc)  # value_btc_in + out, fee, value_cumulative_btc
-        worksheet_txs.set_column(8, 9, 20, format_eur)  # value_eur
+        worksheet_txs.set_column(8, 9, 20, format_fiat)  # value_fiat
         worksheet_txs.set_column(10, 13, 40)  # in_name, out_name, in_addresses, out_addresses
 
         for idx, txid in enumerate(df.txid):
@@ -475,20 +498,20 @@ class CryptalyseWallet(Wallet):
                 datestr = '%s-01-01' % yearstr
             if year == datetime.today().year:
                 datestr =(datetime.today() - timedelta(days=1)).strftime("%Y-%m-%d")
-            price_eur = 0 if not year_totals[year][3] else \
+            price_fiat = 0 if not year_totals[year][3] else \
                 self.price_history(datestr) * year_totals[year][3] * self.network.denominator
             yt_list.append((yearstr, datestr, year_totals[year][0] * self.network.denominator, year_totals[year][1] *
                             self.network.denominator, year_totals[year][2] * self.network.denominator,
-                            year_totals[year][3] * self.network.denominator, price_eur))
+                            year_totals[year][3] * self.network.denominator, price_fiat))
         df = pd.DataFrame(yt_list, columns=['Year', 'Date', 'Total In BTC', 'Total Out BTC', 'Fees BTC',
-                                            'Balance BTC', 'Balance EUR'])
+                                            'Balance BTC', f'Balance {self.fiat_currency.upper()}'])
 
         df.to_excel(writer, sheet_name='Year Totals', index=False)
         worksheet_years = writer.sheets['Year Totals']
         worksheet_years.set_column(0, 0, 15)
         worksheet_years.set_column(1, 1, 20)
         worksheet_years.set_column(2, 5, 20, format_btc)
-        worksheet_years.set_column(6, 6, 20, format_eur)
+        worksheet_years.set_column(6, 6, 20, format_fiat)
 
         writer.close()
 
